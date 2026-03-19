@@ -1,4 +1,5 @@
 import SwiftUI
+import PlaygroundSupport
 
 // MARK: - Data Model
 
@@ -70,17 +71,13 @@ class GratitudeStore: ObservableObject {
     }
 }
 
-// MARK: - Main App
+// MARK: - Entry Point
 
-@main
-struct DailyGratitudeApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(GratitudeStore())
-        }
-    }
-}
+let store = GratitudeStore()
+PlaygroundPage.current.setLiveView(
+    ContentView()
+        .environmentObject(store)
+)
 
 // MARK: - Content View
 
