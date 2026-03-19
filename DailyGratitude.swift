@@ -21,13 +21,6 @@ struct GratitudeEntry: Codable, Identifiable {
         return formatter.string(from: date)
     }
 
-    var dayOfWeek: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "EEEE"
-        return formatter.string(from: date)
-    }
-
     var isComplete: Bool {
         items.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }.count == 3
     }
@@ -65,7 +58,8 @@ class GratitudeStore: ObservableObject {
 
     private func load() {
         guard let data = UserDefaults.standard.data(forKey: saveKey),
-              let decoded = try? JSONDecoder().decode([GratitudeEntry].self, from: data) else { return }
+              let decoded = try? JSONDecoder().decode([GratitudeEntry].self, from: data)
+        else { return }
         entries = decoded.sorted { $0.date > $1.date }
     }
 }
@@ -90,7 +84,6 @@ struct ContentView: View {
                 }
                 .tag(1)
         }
-        .accentColor(.orange)
     }
 }
 
@@ -98,9 +91,10 @@ struct ContentView: View {
 
 struct TodayView: View {
     @EnvironmentObject var store: GratitudeStore
-    @State private var items: [String] = ["", "", ""]
+    @State private var item1 = ""
+    @State private var item2 = ""
+    @State private var item3 = ""
     @State private var showSaved = false
-    @FocusState private var focusedField: Int?
 
     var today: String {
         let formatter = DateFormatter()
@@ -110,16 +104,17 @@ struct TodayView: View {
     }
 
     var isSavable: Bool {
-        items.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }.count == 3
+        !item1.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !item2.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !item3.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 32) {
-                    // Header
                     VStack(spacing: 8) {
-                        Text("✨ 今日の良かったこと")
+                        Text("今日の良かったこと")
                             .font(.title)
                             .fontWeight(.bold)
                         Text(today)
@@ -128,38 +123,17 @@ struct TodayView: View {
                     }
                     .padding(.top, 20)
 
-                    // Input Cards
                     VStack(spacing: 16) {
-                        ForEach(0..<3) { index in
-                            GratitudeInputCard(
-                                number: index + 1,
-                                text: $items[index],
-                                isFocused: focusedField == index,
-                                onSubmit: {
-                                    if index < 2 {
-                                        focusedField = index + 1
-                                    } else {
-                                        focusedField = nil
-                                    }
-                                }
-                            )
-                            .focused($focusedField, equals: index)
-                        }
+                        GratitudeInputCard(number: 1, text: $item1)
+                        GratitudeInputCard(number: 2, text: $item2)
+                        GratitudeInputCard(number: 3, text: $item3)
                     }
                     .padding(.horizontal)
 
-                    // Save Button
-                    Button {
-                        saveEntry()
-                    } label: {
+                    Button(action: saveEntry) {
                         HStack {
-                            if showSaved {
-                                Image(systemName: "checkmark.circle.fill")
-                                Text("保存しました！")
-                            } else {
-                                Image(systemName: "square.and.arrow.down.fill")
-                                Text("保存する")
-                            }
+                            Image(systemName: showSaved ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
+                            Text(showSaved ? "保存しました！" : "保存する")
                         }
                         .font(.headline)
                         .foregroundColor(.white)
@@ -170,7 +144,6 @@ struct TodayView: View {
                         .padding(.horizontal)
                     }
                     .disabled(!isSavable || showSaved)
-                    .animation(.easeInOut, value: showSaved)
 
                     if !isSavable {
                         Text("3つすべて入力すると保存できます")
@@ -181,21 +154,22 @@ struct TodayView: View {
                     Spacer(minLength: 40)
                 }
             }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationBarHidden(true)
-            .background(Color(.systemGroupedBackground))
         }
-        .navigationViewStyle(.stack)
+        .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             if let entry = store.todayEntry {
-                items = entry.items
+                item1 = entry.items.count > 0 ? entry.items[0] : ""
+                item2 = entry.items.count > 1 ? entry.items[1] : ""
+                item3 = entry.items.count > 2 ? entry.items[2] : ""
             }
         }
     }
 
     private func saveEntry() {
-        let entry = GratitudeEntry(items: items)
+        let entry = GratitudeEntry(items: [item1, item2, item3])
         store.saveTodayEntry(entry)
-        focusedField = nil
         withAnimation {
             showSaved = true
         }
@@ -212,39 +186,36 @@ struct TodayView: View {
 struct GratitudeInputCard: View {
     let number: Int
     @Binding var text: String
-    var isFocused: Bool
-    var onSubmit: () -> Void
 
-    var numberEmoji: String {
-        ["1️⃣", "2️⃣", "3️⃣"][number - 1]
-    }
+    private let emojis = ["1️⃣", "2️⃣", "3️⃣"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(numberEmoji)
+                Text(emojis[number - 1])
                     .font(.title2)
                 Text("良かったこと \(number)")
                     .font(.headline)
-                    .foregroundColor(.primary)
             }
 
-            TextField("今日の良かったことを入力...", text: $text, axis: .vertical)
-                .lineLimit(3...6)
-                .padding(12)
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isFocused ? Color.orange : Color.clear, lineWidth: 2)
-                )
-                .submitLabel(number < 3 ? .next : .done)
-                .onSubmit(onSubmit)
+            ZStack(alignment: .topLeading) {
+                if text.isEmpty {
+                    Text("今日の良かったことを入力...")
+                        .foregroundColor(Color(.placeholderText))
+                        .padding(8)
+                }
+                TextEditor(text: $text)
+                    .frame(minHeight: 80)
+                    .opacity(text.isEmpty ? 0.99 : 1)
+            }
+            .padding(4)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
         }
         .padding()
         .background(Color(.secondarySystemGroupedBackground))
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -260,13 +231,14 @@ struct HistoryView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "note.text")
                             .font(.system(size: 60))
-                            .foregroundColor(.secondary.opacity(0.5))
+                            .foregroundColor(.secondary)
+                            .opacity(0.5)
                         Text("まだ記録がありません")
                             .font(.title3)
                             .foregroundColor(.secondary)
                         Text("今日の良かったことを記録してみましょう")
                             .font(.subheadline)
-                            .foregroundColor(.secondary.opacity(0.7))
+                            .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .padding()
@@ -276,13 +248,13 @@ struct HistoryView: View {
                             EntryRow(entry: entry)
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    .listStyle(InsetGroupedListStyle())
                 }
             }
             .navigationTitle("これまでの記録")
             .navigationBarTitleDisplayMode(.large)
         }
-        .navigationViewStyle(.stack)
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 
@@ -292,27 +264,22 @@ struct EntryRow: View {
     let entry: GratitudeEntry
     @State private var isExpanded = false
 
+    private let emojis = ["1️⃣", "2️⃣", "3️⃣"]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
-            Button {
-                withAnimation(.spring(response: 0.3)) {
-                    isExpanded.toggle()
-                }
-            } label: {
+            Button(action: { withAnimation { isExpanded.toggle() } }) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(entry.dateString)
                             .font(.headline)
                             .foregroundColor(.primary)
-                        if entry.isComplete {
-                            Label("3つ完了", systemImage: "checkmark.circle.fill")
+                        HStack(spacing: 4) {
+                            Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "pencil.circle")
+                                .foregroundColor(entry.isComplete ? .green : .orange)
+                            Text(entry.isComplete ? "3つ完了" : "\(entry.items.filter { !$0.isEmpty }.count)/3 記録")
                                 .font(.caption)
-                                .foregroundColor(.green)
-                        } else {
-                            Label("\(entry.items.filter { !$0.isEmpty }.count)/3 記録", systemImage: "pencil.circle")
-                                .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundColor(entry.isComplete ? .green : .orange)
                         }
                     }
                     Spacer()
@@ -322,28 +289,26 @@ struct EntryRow: View {
                 }
                 .padding(.vertical, 4)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PlainButtonStyle())
 
-            // Expanded Content
             if isExpanded {
                 Divider()
                     .padding(.vertical, 8)
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(Array(entry.items.enumerated()), id: \.offset) { index, item in
+                    ForEach(0..<entry.items.count, id: \.self) { index in
+                        let item = entry.items[index]
                         if !item.trimmingCharacters(in: .whitespaces).isEmpty {
                             HStack(alignment: .top, spacing: 10) {
-                                Text(["1️⃣", "2️⃣", "3️⃣"][index])
+                                Text(emojis[index])
                                     .font(.subheadline)
                                 Text(item)
                                     .font(.subheadline)
-                                    .foregroundColor(.primary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
                 }
                 .padding(.bottom, 4)
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
