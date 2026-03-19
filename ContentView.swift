@@ -79,8 +79,10 @@ class RecordStore: ObservableObject {
 }
 
 // MARK: - Root
+// ※ Swift Playgrounds のデフォルト ContentView と衝突しないよう AppRootView を使用
+//   エントリポイント（MyApp.swift 等）で AppRootView() を呼び出してください
 
-struct ContentView: View {
+struct AppRootView: View {
     @StateObject private var store = RecordStore()
 
     var body: some View {
