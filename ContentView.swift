@@ -343,7 +343,7 @@ struct CalendarTab: View {
 
                 // Grid
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 4) {
-                    ForEach(0..<calendarDays.count, id: \.self) { i in
+                    ForEach(calendarDays.indices, id: \.self) { i in
                         if let date = calendarDays[i] {
                             let weekday = cal.component(.weekday, from: date)
                             DayCell(
@@ -416,7 +416,7 @@ struct DayCell: View {
 
             // Record dots (up to 3)
             HStack(spacing: 3) {
-                ForEach(0..<3) { i in
+                ForEach(0..<3, id: \.self) { i in
                     Circle()
                         .fill(i < recordCount
                               ? (isSelected ? Color.white : Color.blue)
