@@ -1,5 +1,4 @@
 import SwiftUI
-import PlaygroundSupport
 
 // MARK: - Data Model
 
@@ -70,14 +69,6 @@ class GratitudeStore: ObservableObject {
         entries = decoded.sorted { $0.date > $1.date }
     }
 }
-
-// MARK: - Entry Point
-
-let store = GratitudeStore()
-PlaygroundPage.current.setLiveView(
-    ContentView()
-        .environmentObject(store)
-)
 
 // MARK: - Content View
 
