@@ -70,7 +70,7 @@ extension Exercise {
         Exercise(name: "ダンベルロウ",           muscleGroup: .back),
         Exercise(name: "デッドリフト",           muscleGroup: .back),
         // 肩
-        Exercise(name: "オーバーヘッドプレス",    muscleGroup: .shoulders),
+        Exercise(name: "アーノルドプレス",    muscleGroup: .shoulders),
         Exercise(name: "ラテラルレイズ",         muscleGroup: .shoulders),
         Exercise(name: "フロントレイズ",         muscleGroup: .shoulders),
         Exercise(name: "リアデルトフライ",        muscleGroup: .shoulders),
@@ -80,7 +80,7 @@ extension Exercise {
         Exercise(name: "トライセップエクステンション", muscleGroup: .arms),
         Exercise(name: "トライセップディップス",   muscleGroup: .arms, isBodyweight: true),
         // 脚
-        Exercise(name: "スクワット",             muscleGroup: .legs),
+        Exercise(name: "ダンベルブルガリアンスクワット",             muscleGroup: .legs),
         Exercise(name: "レッグプレス",           muscleGroup: .legs),
         Exercise(name: "ランジ",                 muscleGroup: .legs, isBodyweight: true),
         Exercise(name: "レッグカール",           muscleGroup: .legs),
@@ -92,8 +92,8 @@ extension Exercise {
         Exercise(name: "ロシアンツイスト",        muscleGroup: .core, isBodyweight: true),
         Exercise(name: "レッグレイズ",           muscleGroup: .core, isBodyweight: true),
         // 有酸素
-        Exercise(name: "マウンテンクライマー",    muscleGroup: .cardio, isBodyweight: true),
-        Exercise(name: "バーピー",               muscleGroup: .cardio, isBodyweight: true),
+        Exercise(name: "ラン",    muscleGroup: .cardio, isBodyweight: true),
+        Exercise(name: "バイク",               muscleGroup: .cardio, isBodyweight: true),
     ]
 }
 
