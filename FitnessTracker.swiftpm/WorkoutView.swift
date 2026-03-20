@@ -23,6 +23,7 @@ struct WorkoutView: View {
     @State private var selectedMuscleGroup: MuscleGroup? = nil
     @State private var searchText = ""
     @State private var activeSheet: WorkoutSheet? = nil
+    @State private var pendingTimerSeconds: Int? = nil
     @State private var showingEndConfirm = false
 
     var filteredExercises: [Exercise] {
@@ -88,8 +89,14 @@ struct WorkoutView: View {
                 Button("破棄して終了", role: .destructive) { dataStore.discardSession() }
                 Button("キャンセル", role: .cancel) {}
             }
-            // ★ シートを1つに統一して誤発火を防ぐ
-            .sheet(item: $activeSheet) { sheet in
+            // ★ onDismiss パターンで LogSet → RestTimer の安全な連鎖
+            .sheet(item: $activeSheet, onDismiss: {
+                guard let seconds = pendingTimerSeconds else { return }
+                pendingTimerSeconds = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    activeSheet = .restTimer(seconds)
+                }
+            }) { sheet in
                 switch sheet {
                 case .logSet(let exercise):
                     LogSetSheet(
@@ -97,10 +104,13 @@ struct WorkoutView: View {
                         initialWeight: dataStore.lastWeight(for: exercise.id),
                         initialReps: dataStore.lastReps(for: exercise.id),
                         onLoggedWithTimer: {
-                            activeSheet = .restTimer(defaultRestSeconds)
+                            // pendingTimerSeconds をセットしてから閉じる → onDismiss でタイマー起動
+                            pendingTimerSeconds = defaultRestSeconds
+                            activeSheet = nil
                         },
                         onLoggedOnly: {
-                            activeSheet = nil   // タイマーなし → シートを閉じるだけ
+                            // pendingTimerSeconds は nil のまま → タイマーは起動しない
+                            activeSheet = nil
                         }
                     )
                 case .restTimer(let seconds):

@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import AudioToolbox
 
 // MARK: - TimerView
 
@@ -33,6 +34,8 @@ struct TimerView: View {
 // MARK: - HIIT Timer
 
 struct HIITTimerView: View {
+
+    @AppStorage("hiitSoundEnabled") private var soundEnabled: Bool = true
 
     // Config
     @State private var workSeconds: Int = 40
@@ -201,6 +204,10 @@ struct HIITTimerView: View {
         timerTask = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             if timeRemaining > 0 {
                 timeRemaining -= 1
+                // 5秒前カウントダウン音
+                if soundEnabled && timeRemaining <= 5 && timeRemaining > 0 {
+                    AudioServicesPlaySystemSound(1057) // tock
+                }
             } else {
                 advancePhase()
             }
@@ -216,11 +223,13 @@ struct HIITTimerView: View {
                 stopTimer()
                 phase = .finished
                 gen.notificationOccurred(.success)
+                if soundEnabled { AudioServicesPlaySystemSound(1025) } // 完了音
             } else {
                 // レストへ
                 phase = .rest
                 timeRemaining = restSeconds
                 gen.notificationOccurred(.warning)
+                if soundEnabled { AudioServicesPlaySystemSound(1054) } // フェーズ切替音
                 startTicking()
             }
         } else if phase == .rest {
@@ -229,6 +238,7 @@ struct HIITTimerView: View {
             phase = .work
             timeRemaining = workSeconds
             gen.notificationOccurred(.warning)
+            if soundEnabled { AudioServicesPlaySystemSound(1054) } // フェーズ切替音
             startTicking()
         }
     }

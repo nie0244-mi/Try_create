@@ -112,11 +112,20 @@ struct WorkoutCalendarView: View {
                 // 選択日のセッション or 空状態
                 if let date = selectedDate {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(date.formatted(.dateTime.month().day().weekday()))
-                            .font(.subheadline.bold())
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
-                            .padding(.vertical, 10)
+                        HStack {
+                            Text(date.formatted(.dateTime.month().day().weekday()))
+                                .font(.subheadline.bold())
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            if !selectedSessions.isEmpty {
+                                ShareLink(item: dailyShareText(date: date, sessions: selectedSessions)) {
+                                    Label("共有", systemImage: "square.and.arrow.up")
+                                        .font(.subheadline)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
 
                         if selectedSessions.isEmpty {
                             ContentUnavailableView(
@@ -166,6 +175,46 @@ struct WorkoutCalendarView: View {
                 }
             }
         }
+    }
+
+    private func dailyShareText(date: Date, sessions: [WorkoutSession]) -> String {
+        var lines: [String] = []
+        lines.append("💪 \(date.formatted(.dateTime.year().month().day()))")
+        let totalSets = sessions.reduce(0) { $0 + $1.sets.count }
+        let totalVolume = sessions.reduce(0.0) { $0 + $1.totalVolume }
+        if let firstDur = sessions.compactMap({ $0.duration }).first {
+            let totalDur = sessions.compactMap { $0.duration }.reduce(0, +)
+            lines.append("⏱ \(formatDurationShare(totalDur))")
+        }
+        lines.append("")
+        let allExerciseIds = sessions.flatMap { $0.sets.map { $0.exerciseId } }
+        let uniqueIds = Array(NSOrderedSet(array: allExerciseIds)) as! [UUID]
+        for id in uniqueIds {
+            if let name = dataStore.exercise(for: id)?.name {
+                let sets = sessions.flatMap { $0.sets.filter { $0.exerciseId == id } }
+                lines.append("▸ \(name)")
+                for (i, set) in sets.enumerated() {
+                    if set.weight > 0 {
+                        lines.append("  セット\(i+1): \(Int(set.weight))kg × \(set.reps)rep")
+                    } else {
+                        lines.append("  セット\(i+1): \(set.reps)rep")
+                    }
+                }
+            }
+        }
+        if totalVolume > 0 {
+            lines.append("")
+            lines.append("総ボリューム: \(Int(totalVolume))kg")
+        }
+        lines.append("総セット数: \(totalSets)セット")
+        lines.append("")
+        lines.append("#筋トレ #トレーニング記録")
+        return lines.joined(separator: "\n")
+    }
+
+    private func formatDurationShare(_ t: TimeInterval) -> String {
+        let m = Int(t) / 60
+        return m < 60 ? "\(m)分" : String(format: "%d時間%02d分", m / 60, m % 60)
     }
 
     private func dayKey(_ date: Date) -> String {
@@ -306,33 +355,6 @@ struct SessionDetailView: View {
         }
     }
 
-    /// SNS 共有用テキストを生成
-    private var shareText: String {
-        var lines: [String] = []
-        lines.append("💪 \(session.startedAt.formatted(.dateTime.year().month().day()))")
-        if let dur = session.duration {
-            lines.append("⏱ \(formatDuration(dur))")
-        }
-        lines.append("")
-        for (exercise, sets) in setsByExercise {
-            lines.append("▸ \(exercise.name)")
-            for (i, set) in sets.enumerated() {
-                if set.weight > 0 {
-                    lines.append("  セット\(i+1): \(formatWeight(set.weight))kg × \(set.reps)rep")
-                } else {
-                    lines.append("  セット\(i+1): \(set.reps)rep")
-                }
-            }
-        }
-        if session.totalVolume > 0 {
-            lines.append("")
-            lines.append("総ボリューム: \(Int(session.totalVolume))kg")
-        }
-        lines.append("")
-        lines.append("#筋トレ #トレーニング記録")
-        return lines.joined(separator: "\n")
-    }
-
     var body: some View {
         List {
             Section("サマリー") {
@@ -373,13 +395,6 @@ struct SessionDetailView: View {
         }
         .navigationTitle(session.startedAt.formatted(.dateTime.month().day()))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: shareText) {
-                    Image(systemName: "square.and.arrow.up")
-                }
-            }
-        }
     }
 
     private func formatDuration(_ t: TimeInterval) -> String {

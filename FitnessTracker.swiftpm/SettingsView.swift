@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("defaultRestSeconds") private var defaultRestSeconds: Int = 90
     @AppStorage("weightUnit") private var weightUnit: String = "kg"
     @AppStorage("autoStartRestTimer") private var autoStartRestTimer: Bool = true
+    @AppStorage("hiitSoundEnabled") private var hiitSoundEnabled: Bool = true
 
     @EnvironmentObject var dataStore: DataStore
     @State private var showingResetAlert = false
@@ -31,10 +32,14 @@ struct SettingsView: View {
                     Toggle(isOn: $autoStartRestTimer) {
                         Label("セット後に自動で休憩タイマー", systemImage: "bolt.fill")
                     }
+
+                    Toggle(isOn: $hiitSoundEnabled) {
+                        Label("HIITタイマー サウンド", systemImage: "speaker.wave.2.fill")
+                    }
                 } header: {
                     Text("タイマー")
                 } footer: {
-                    Text("セットを記録した直後に休憩タイマーを自動起動します。")
+                    Text("セットを記録した直後に休憩タイマーを自動起動します。HIITタイマーは残り5秒からカウントダウン音、フェーズ切替時に別の音を鳴らします。")
                 }
 
                 // MARK: 重量単位
