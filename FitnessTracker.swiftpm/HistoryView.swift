@@ -182,9 +182,9 @@ struct WorkoutCalendarView: View {
         lines.append("💪 \(date.formatted(.dateTime.year().month().day()))")
         let totalSets = sessions.reduce(0) { $0 + $1.sets.count }
         let totalVolume = sessions.reduce(0.0) { $0 + $1.totalVolume }
-        if let firstDur = sessions.compactMap({ $0.duration }).first {
-            let totalDur = sessions.compactMap { $0.duration }.reduce(0, +)
-            lines.append("⏱ \(formatDurationShare(totalDur))")
+        let durations = sessions.compactMap { $0.duration }
+        if !durations.isEmpty {
+            lines.append("⏱ \(formatDurationShare(durations.reduce(0, +)))")
         }
         lines.append("")
         let allExerciseIds = sessions.flatMap { $0.sets.map { $0.exerciseId } }
