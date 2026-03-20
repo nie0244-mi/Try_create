@@ -23,7 +23,7 @@ struct WorkoutView: View {
     @State private var selectedMuscleGroup: MuscleGroup? = nil
     @State private var searchText = ""
     @State private var activeSheet: WorkoutSheet? = nil
-    @State private var pendingTimerSeconds: Int? = nil
+    @State private var timerRequested = false
     @State private var showingEndConfirm = false
 
     var filteredExercises: [Exercise] {
@@ -89,12 +89,16 @@ struct WorkoutView: View {
                 Button("破棄して終了", role: .destructive) { dataStore.discardSession() }
                 Button("キャンセル", role: .cancel) {}
             }
-            // ★ onDismiss パターンで LogSet → RestTimer の安全な連鎖
+            // ★ LogSetSheet が dismiss() を呼び、timerRequested Binding でフラグを渡す
+            //    onDismiss は dismiss() 経由でのみ確実に発火する
             .sheet(item: $activeSheet, onDismiss: {
-                guard let seconds = pendingTimerSeconds else { return }
-                pendingTimerSeconds = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    activeSheet = .restTimer(seconds)
+                // LogSet シートが閉じた後にタイマーが必要な場合のみ起動
+                // RestTimerSheet が閉じた場合は timerRequested == false なので何もしない
+                if timerRequested {
+                    timerRequested = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        activeSheet = .restTimer(defaultRestSeconds)
+                    }
                 }
             }) { sheet in
                 switch sheet {
@@ -103,15 +107,7 @@ struct WorkoutView: View {
                         exercise: exercise,
                         initialWeight: dataStore.lastWeight(for: exercise.id),
                         initialReps: dataStore.lastReps(for: exercise.id),
-                        onLoggedWithTimer: {
-                            // pendingTimerSeconds をセットしてから閉じる → onDismiss でタイマー起動
-                            pendingTimerSeconds = defaultRestSeconds
-                            activeSheet = nil
-                        },
-                        onLoggedOnly: {
-                            // pendingTimerSeconds は nil のまま → タイマーは起動しない
-                            activeSheet = nil
-                        }
+                        timerRequested: $timerRequested
                     )
                 case .restTimer(let seconds):
                     RestTimerSheet(totalSeconds: seconds)
@@ -233,20 +229,19 @@ struct LogSetSheet: View {
     let exercise: Exercise
     let initialWeight: Double
     let initialReps: Int
-    let onLoggedWithTimer: () -> Void
-    let onLoggedOnly: () -> Void
+    /// 親の timerRequested Binding。dismiss() 前にセットすることで
+    /// onDismiss が確実に正しいフラグを読める
+    @Binding var timerRequested: Bool
 
     @State private var weight: Double
     @State private var reps: Int
 
     init(exercise: Exercise, initialWeight: Double, initialReps: Int,
-         onLoggedWithTimer: @escaping () -> Void,
-         onLoggedOnly: @escaping () -> Void) {
+         timerRequested: Binding<Bool>) {
         self.exercise = exercise
         self.initialWeight = initialWeight
         self.initialReps = initialReps
-        self.onLoggedWithTimer = onLoggedWithTimer
-        self.onLoggedOnly = onLoggedOnly
+        self._timerRequested = timerRequested
         _weight = State(initialValue: initialWeight)
         _reps = State(initialValue: max(1, initialReps))
     }
@@ -336,12 +331,9 @@ struct LogSetSheet: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
 
-        // dismiss() を使わず親の state を直接変更してシート切替（誤発火防止）
-        if startTimer {
-            onLoggedWithTimer()
-        } else {
-            onLoggedOnly()   // activeSheet = nil → シートが閉じるだけ
-        }
+        // dismiss() を呼ぶ前にフラグをセット → onDismiss が確実に正しい値を読む
+        timerRequested = startTimer
+        dismiss()
     }
 }
 
