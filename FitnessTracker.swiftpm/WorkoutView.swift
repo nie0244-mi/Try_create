@@ -257,15 +257,27 @@ struct LogSetSheet: View {
                     // レップ数
                     RepsStepper(reps: $reps)
 
-                    // 記録ボタン
-                    Button(action: logSet) {
-                        Label("セットを記録", systemImage: "checkmark.circle.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(exercise.muscleGroup.color)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    // 記録ボタン（タイマーあり / なし）
+                    VStack(spacing: 10) {
+                        Button { logSet(startTimer: true) } label: {
+                            Label("記録してタイマー開始", systemImage: "timer")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(exercise.muscleGroup.color)
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+
+                        Button { logSet(startTimer: false) } label: {
+                            Text("記録のみ")
+                                .font(.subheadline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 13)
+                                .background(Color(.systemGray6))
+                                .foregroundColor(.primary)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.top, 4)
@@ -282,7 +294,7 @@ struct LogSetSheet: View {
         }
     }
 
-    private func logSet() {
+    private func logSet(startTimer: Bool) {
         let newSet = WorkoutSet(
             exerciseId: exercise.id,
             weight: exercise.isBodyweight ? 0 : weight,
@@ -294,8 +306,10 @@ struct LogSetSheet: View {
         generator.impactOccurred()
 
         dismiss()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            onLogged()
+        if startTimer {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                onLogged()
+            }
         }
     }
 }
