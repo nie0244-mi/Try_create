@@ -9,7 +9,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "FitnessTracker",
-            path: "Sources"
+            path: "."
         )
     ]
 )
