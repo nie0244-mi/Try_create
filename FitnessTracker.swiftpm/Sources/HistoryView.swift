@@ -16,11 +16,20 @@ struct HistoryView: View {
         NavigationStack {
             Group {
                 if dataStore.sessions.isEmpty {
-                    ContentUnavailableView(
-                        "記録なし",
-                        systemImage: "calendar.badge.plus",
-                        description: Text("トレーニングを記録すると\nここに表示されます")
-                    )
+                    VStack(spacing: 16) {
+                        Spacer()
+                        Image(systemName: "calendar.badge.plus")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondary)
+                        Text("記録なし")
+                            .font(.title2.bold())
+                        Text("トレーニングを記録すると\nここに表示されます")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
                 } else {
                     List {
                         ForEach(groupedSessions, id: \.0) { date, sessions in

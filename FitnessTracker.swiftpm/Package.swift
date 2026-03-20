@@ -1,10 +1,10 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.5
 import PackageDescription
 
 let package = Package(
     name: "FitnessTracker",
     platforms: [
-        .iOS(.v17)
+        .iOS(.v16)
     ],
     targets: [
         .executableTarget(
