@@ -23,7 +23,7 @@ struct WorkoutView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
 
                 // アクティブセッションバナー
@@ -91,7 +91,6 @@ struct WorkoutView: View {
                 RestTimerSheet(totalSeconds: defaultRestSeconds)
             }
         }
-        .navigationViewStyle(.stack)
     }
 }
 
@@ -222,7 +221,7 @@ struct LogSetSheet: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
 
@@ -281,7 +280,6 @@ struct LogSetSheet: View {
                 }
             }
         }
-        .navigationViewStyle(.stack)
     }
 
     private func logSet() {

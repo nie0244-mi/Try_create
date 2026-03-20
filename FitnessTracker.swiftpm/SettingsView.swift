@@ -11,7 +11,7 @@ struct SettingsView: View {
     @State private var showingResetAlert = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
 
                 // MARK: タイマー設定
@@ -45,7 +45,7 @@ struct SettingsView: View {
                     } label: {
                         Label("重量単位", systemImage: "scalemass.fill")
                     }
-                    .pickerStyle(.menu)
+                    .pickerStyle(.navigationLink)
                 } header: {
                     Text("単位")
                 }
@@ -134,6 +134,5 @@ struct SettingsView: View {
                 Text("すべてのトレーニング記録が削除されます。この操作は元に戻せません。")
             }
         }
-        .navigationViewStyle(.stack)
     }
 }

@@ -13,23 +13,14 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if dataStore.sessions.isEmpty {
-                    VStack(spacing: 16) {
-                        Spacer()
-                        Image(systemName: "calendar.badge.plus")
-                            .font(.system(size: 60))
-                            .foregroundColor(.secondary)
-                        Text("記録なし")
-                            .font(.title2.bold())
-                        Text("トレーニングを記録すると\nここに表示されます")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
+                    ContentUnavailableView(
+                        "記録なし",
+                        systemImage: "calendar.badge.plus",
+                        description: Text("トレーニングを記録すると\nここに表示されます")
+                    )
                 } else {
                     List {
                         ForEach(groupedSessions, id: \.0) { date, sessions in
@@ -55,7 +46,6 @@ struct HistoryView: View {
             }
             .navigationTitle("履歴")
         }
-        .navigationViewStyle(.stack)
     }
 }
 
@@ -149,13 +139,13 @@ struct SessionDetailView: View {
     var body: some View {
         List {
             Section("サマリー") {
-                InfoRow(label: "開始時刻", value: session.startedAt.formatted(.dateTime.hour().minute()))
+                LabeledContent("開始時刻", value: session.startedAt.formatted(.dateTime.hour().minute()))
                 if let dur = session.duration {
-                    InfoRow(label: "トレーニング時間", value: formatDuration(dur))
+                    LabeledContent("トレーニング時間", value: formatDuration(dur))
                 }
-                InfoRow(label: "総セット数", value: "\(session.sets.count)")
+                LabeledContent("総セット数", value: "\(session.sets.count)")
                 if session.totalVolume > 0 {
-                    InfoRow(label: "総ボリューム", value: "\(Int(session.totalVolume)) kg")
+                    LabeledContent("総ボリューム", value: "\(Int(session.totalVolume)) kg")
                 }
             }
 
@@ -202,18 +192,3 @@ struct SessionDetailView: View {
     }
 }
 
-// MARK: - Info Row (LabeledContent の代替)
-
-struct InfoRow: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack {
-            Text(label)
-            Spacer()
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-    }
-}
