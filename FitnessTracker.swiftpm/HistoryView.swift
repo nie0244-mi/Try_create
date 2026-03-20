@@ -306,6 +306,33 @@ struct SessionDetailView: View {
         }
     }
 
+    /// SNS 共有用テキストを生成
+    private var shareText: String {
+        var lines: [String] = []
+        lines.append("💪 \(session.startedAt.formatted(.dateTime.year().month().day()))")
+        if let dur = session.duration {
+            lines.append("⏱ \(formatDuration(dur))")
+        }
+        lines.append("")
+        for (exercise, sets) in setsByExercise {
+            lines.append("▸ \(exercise.name)")
+            for (i, set) in sets.enumerated() {
+                if set.weight > 0 {
+                    lines.append("  セット\(i+1): \(formatWeight(set.weight))kg × \(set.reps)rep")
+                } else {
+                    lines.append("  セット\(i+1): \(set.reps)rep")
+                }
+            }
+        }
+        if session.totalVolume > 0 {
+            lines.append("")
+            lines.append("総ボリューム: \(Int(session.totalVolume))kg")
+        }
+        lines.append("")
+        lines.append("#筋トレ #トレーニング記録")
+        return lines.joined(separator: "\n")
+    }
+
     var body: some View {
         List {
             Section("サマリー") {
@@ -346,6 +373,13 @@ struct SessionDetailView: View {
         }
         .navigationTitle(session.startedAt.formatted(.dateTime.month().day()))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ShareLink(item: shareText) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+        }
     }
 
     private func formatDuration(_ t: TimeInterval) -> String {

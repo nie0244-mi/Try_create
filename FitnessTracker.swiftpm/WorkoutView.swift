@@ -3,15 +3,26 @@ import UIKit
 
 // MARK: - WorkoutView
 
+/// シート管理を1つの enum に集約（複数 .sheet による誤発火を防ぐ）
+enum WorkoutSheet: Identifiable {
+    case logSet(Exercise)
+    case restTimer(Int)   // 休憩秒数
+
+    var id: String {
+        switch self {
+        case .logSet(let e):   return "log-\(e.id)"
+        case .restTimer(let s): return "rest-\(s)"
+        }
+    }
+}
+
 struct WorkoutView: View {
     @EnvironmentObject var dataStore: DataStore
     @AppStorage("defaultRestSeconds") private var defaultRestSeconds: Int = 90
 
     @State private var selectedMuscleGroup: MuscleGroup? = nil
     @State private var searchText = ""
-    @State private var selectedExercise: Exercise? = nil
-    @State private var showingLogSheet = false
-    @State private var showingRestTimer = false
+    @State private var activeSheet: WorkoutSheet? = nil
     @State private var showingEndConfirm = false
 
     var filteredExercises: [Exercise] {
@@ -53,8 +64,7 @@ struct WorkoutView: View {
                         ExerciseRow(exercise: exercise)
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                selectedExercise = exercise
-                                showingLogSheet = true
+                                activeSheet = .logSet(exercise)
                             }
                     }
                 }
@@ -78,17 +88,24 @@ struct WorkoutView: View {
                 Button("破棄して終了", role: .destructive) { dataStore.discardSession() }
                 Button("キャンセル", role: .cancel) {}
             }
-            .sheet(item: $selectedExercise) { exercise in
-                LogSetSheet(
-                    exercise: exercise,
-                    initialWeight: dataStore.lastWeight(for: exercise.id),
-                    initialReps: dataStore.lastReps(for: exercise.id)
-                ) {
-                    showingRestTimer = true
+            // ★ シートを1つに統一して誤発火を防ぐ
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .logSet(let exercise):
+                    LogSetSheet(
+                        exercise: exercise,
+                        initialWeight: dataStore.lastWeight(for: exercise.id),
+                        initialReps: dataStore.lastReps(for: exercise.id),
+                        onLoggedWithTimer: {
+                            activeSheet = .restTimer(defaultRestSeconds)
+                        },
+                        onLoggedOnly: {
+                            activeSheet = nil   // タイマーなし → シートを閉じるだけ
+                        }
+                    )
+                case .restTimer(let seconds):
+                    RestTimerSheet(totalSeconds: seconds)
                 }
-            }
-            .sheet(isPresented: $showingRestTimer) {
-                RestTimerSheet(totalSeconds: defaultRestSeconds)
             }
         }
     }
@@ -206,16 +223,20 @@ struct LogSetSheet: View {
     let exercise: Exercise
     let initialWeight: Double
     let initialReps: Int
-    let onLogged: () -> Void
+    let onLoggedWithTimer: () -> Void
+    let onLoggedOnly: () -> Void
 
     @State private var weight: Double
     @State private var reps: Int
 
-    init(exercise: Exercise, initialWeight: Double, initialReps: Int, onLogged: @escaping () -> Void) {
+    init(exercise: Exercise, initialWeight: Double, initialReps: Int,
+         onLoggedWithTimer: @escaping () -> Void,
+         onLoggedOnly: @escaping () -> Void) {
         self.exercise = exercise
         self.initialWeight = initialWeight
         self.initialReps = initialReps
-        self.onLogged = onLogged
+        self.onLoggedWithTimer = onLoggedWithTimer
+        self.onLoggedOnly = onLoggedOnly
         _weight = State(initialValue: initialWeight)
         _reps = State(initialValue: max(1, initialReps))
     }
@@ -305,11 +326,11 @@ struct LogSetSheet: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
 
-        dismiss()
+        // dismiss() を使わず親の state を直接変更してシート切替（誤発火防止）
         if startTimer {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                onLogged()
-            }
+            onLoggedWithTimer()
+        } else {
+            onLoggedOnly()   // activeSheet = nil → シートが閉じるだけ
         }
     }
 }
