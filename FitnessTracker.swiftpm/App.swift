@@ -1,21 +1,10 @@
 import SwiftUI
 
-@main
-struct FitnessTrackerApp: App {
-    @StateObject private var dataStore = DataStore()
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(dataStore)
-        }
-    }
-}
-
 // MARK: - ContentView (Tab Root)
+// @main と App エントリーポイントは Swift Playgrounds が自動生成したファイルに任せる
 
 struct ContentView: View {
-    @EnvironmentObject var dataStore: DataStore
+    @StateObject private var dataStore = DataStore()
 
     var body: some View {
         TabView {
@@ -40,5 +29,6 @@ struct ContentView: View {
                 }
         }
         .tint(.orange)
+        .environmentObject(dataStore)
     }
 }
