@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "FitnessTracker",
     platforms: [
-        .iOS(.v16)
+        .iOS("16.0")
     ],
     targets: [
         .executableTarget(
