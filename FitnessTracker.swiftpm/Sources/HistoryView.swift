@@ -13,7 +13,7 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Group {
                 if dataStore.sessions.isEmpty {
                     VStack(spacing: 16) {
@@ -55,6 +55,7 @@ struct HistoryView: View {
             }
             .navigationTitle("履歴")
         }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -148,13 +149,13 @@ struct SessionDetailView: View {
     var body: some View {
         List {
             Section("サマリー") {
-                LabeledContent("開始時刻", value: session.startedAt.formatted(.dateTime.hour().minute()))
+                InfoRow(label: "開始時刻", value: session.startedAt.formatted(.dateTime.hour().minute()))
                 if let dur = session.duration {
-                    LabeledContent("トレーニング時間", value: formatDuration(dur))
+                    InfoRow(label: "トレーニング時間", value: formatDuration(dur))
                 }
-                LabeledContent("総セット数", value: "\(session.sets.count)")
+                InfoRow(label: "総セット数", value: "\(session.sets.count)")
                 if session.totalVolume > 0 {
-                    LabeledContent("総ボリューム", value: "\(Int(session.totalVolume)) kg")
+                    InfoRow(label: "総ボリューム", value: "\(Int(session.totalVolume)) kg")
                 }
             }
 
@@ -198,5 +199,21 @@ struct SessionDetailView: View {
 
     private func formatWeight(_ w: Double) -> String {
         w.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(w))" : String(format: "%.1f", w)
+    }
+}
+
+// MARK: - Info Row (LabeledContent の代替)
+
+struct InfoRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(value)
+                .foregroundColor(.secondary)
+        }
     }
 }

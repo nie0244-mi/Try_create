@@ -11,7 +11,7 @@ struct SettingsView: View {
     @State private var showingResetAlert = false
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
 
                 // MARK: タイマー設定
@@ -45,36 +45,34 @@ struct SettingsView: View {
                     } label: {
                         Label("重量単位", systemImage: "scalemass.fill")
                     }
-                    .pickerStyle(.navigationLink)
+                    .pickerStyle(.menu)
                 } header: {
                     Text("単位")
                 }
 
                 // MARK: 広告スペース（アフィリエイト用）
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "megaphone.fill")
-                                .foregroundColor(.orange)
-                                .frame(width: 28)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("アフィリエイト広告")
-                                    .font(.body)
-                                Text("近日公開予定")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            // TODO: AdMob / affiliate banner を設置
-                            // AdBannerView()
-                            Text("準備中")
+                    HStack {
+                        Image(systemName: "megaphone.fill")
+                            .foregroundColor(.orange)
+                            .frame(width: 28)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("アフィリエイト広告")
+                                .font(.body)
+                            Text("近日公開予定")
                                 .font(.caption)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color.orange.opacity(0.15))
-                                .foregroundColor(.orange)
-                                .clipShape(Capsule())
+                                .foregroundColor(.secondary)
                         }
+                        Spacer()
+                        // TODO: AdMob / affiliate banner を設置
+                        // AdBannerView()
+                        Text("準備中")
+                            .font(.caption)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundColor(.orange)
+                            .clipShape(Capsule())
                     }
                     .padding(.vertical, 4)
                 } header: {
@@ -85,11 +83,15 @@ struct SettingsView: View {
 
                 // MARK: データ管理
                 Section {
-                    LabeledContent("記録したセッション数") {
+                    HStack {
+                        Text("記録したセッション数")
+                        Spacer()
                         Text("\(dataStore.sessions.count) 件")
                             .foregroundColor(.secondary)
                     }
-                    LabeledContent("記録した総セット数") {
+                    HStack {
+                        Text("記録した総セット数")
+                        Spacer()
                         Text("\(dataStore.sessions.reduce(0) { $0 + $1.sets.count }) セット")
                             .foregroundColor(.secondary)
                     }
@@ -105,8 +107,16 @@ struct SettingsView: View {
 
                 // MARK: アプリ情報
                 Section {
-                    LabeledContent("バージョン", value: "1.0.0")
-                    LabeledContent("ビルド", value: "1")
+                    HStack {
+                        Text("バージョン")
+                        Spacer()
+                        Text("1.0.0").foregroundColor(.secondary)
+                    }
+                    HStack {
+                        Text("ビルド")
+                        Spacer()
+                        Text("1").foregroundColor(.secondary)
+                    }
                     Link(destination: URL(string: "https://example.com/privacy")!) {
                         Label("プライバシーポリシー", systemImage: "hand.raised")
                     }
@@ -124,5 +134,6 @@ struct SettingsView: View {
                 Text("すべてのトレーニング記録が削除されます。この操作は元に戻せません。")
             }
         }
+        .navigationViewStyle(.stack)
     }
 }

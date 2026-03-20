@@ -23,7 +23,7 @@ struct WorkoutView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 0) {
 
                 // アクティブセッションバナー
@@ -91,6 +91,7 @@ struct WorkoutView: View {
                 RestTimerSheet(totalSeconds: defaultRestSeconds)
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
@@ -221,7 +222,7 @@ struct LogSetSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
 
@@ -280,8 +281,7 @@ struct LogSetSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .navigationViewStyle(.stack)
     }
 
     private func logSet() {
@@ -518,8 +518,6 @@ struct RestTimerSheet: View {
             Spacer()
         }
         .padding()
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
         .onAppear { startTimer() }
         .onDisappear { stopTimer() }
     }

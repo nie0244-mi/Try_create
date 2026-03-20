@@ -9,7 +9,7 @@ struct TimerView: View {
     enum TimerMode { case hiit, rest }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 0) {
                 Picker("モード", selection: $mode) {
                     Text("HIIT").tag(TimerMode.hiit)
@@ -27,6 +27,7 @@ struct TimerView: View {
             .navigationTitle("タイマー")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .navigationViewStyle(.stack)
     }
 }
 
